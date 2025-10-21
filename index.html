@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Kalkulačka</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+    .calculator {
+      padding: 30px;
+      border-radius: 15px;
+      display: inline-block;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 400px;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 20px;
+      text-align: center;
+      transition: background-color 0.5s ease, color 0.5s ease, border 0.5s ease;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: none;
+      transition: background-color 0.5s ease, color 0.5s ease, border 0.5s ease;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 22px;
+      transition: color 0.5s ease;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      background: #ddd;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      overflow: hidden;
+    }
+    .progress-bar {
+      position: relative;
+      height: 25px;
+      width: 0;
+      background: linear-gradient(90deg, orange, yellow, limegreen);
+      border-radius: 10px;
+      text-align: center;
+      color: black; /* text uvnitř progress baru černý */
+      line-height: 25px;
+      font-weight: bold;
+      transition: width 3s linear;
+      overflow: hidden;
+    }
+    .progress-bar::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -50%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(120deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+      transform: skewX(-20deg);
+      animation: shine 2s infinite;
+    }
+    @keyframes shine {
+      0% { left: -50%; }
+      100% { left: 120%; }
+    }
+
+    .note {
+      font-size: 14px;
+      margin-top: 10px;
+      transition: color 0.5s ease;
+    }
+
+    /* Tlačítko v pravém horním rohu (světlo/tma) */
+    #themeToggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+    }
+
+    /* Kulaté tlačítko Google dole uprostřed */
+    #googleBtn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    #googleBtn:hover {
+      transform: translateX(-50%) scale(1.1);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Světlý režim */
+    body.light {
+      background-color: #eef2f7;
+      color: #000;
+    }
+    .light .calculator {
+      background-color: #fff;
+      color: #000;
+    }
+    .light .note {
+      color: #555;
+    }
+    .light #themeToggle {
+      background-color: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+
+    /* Tmavý režim */
+    body.dark {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .dark .calculator {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+    .dark input[type="text"] {
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+      border: 1px solid #555;
+    }
+    .dark .note {
+      color: #bbb;
+    }
+    .dark #themeToggle {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      border: 1px solid #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Textová kalkulačka</h1>
+  <button id="themeToggle" onclick="toggleTheme()">🌙 Tmavý režim</button>
+  
+  <div class="calculator">
+    <input type="text" id="expression" placeholder="Zadej výraz (např. 5,5 + 3,5)">
+    <br>
+    <button onclick="calculate()">Vypočítat</button>
+
+    <!-- Progress bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar">Počítám… 0%</div>
+    </div>
+
+    <div id="result"></div>
+    <div class="note">Používej znaménka + - * / a desetinná čísla s čárkou (např. 0,5). Mezery nevadí.</div>
+  </div>
+
+  <!-- Kulaté tlačítko Google -->
+  <button id="googleBtn" onclick="window.location.href='https://www.google.com/'" aria-label="Otevřít Google">
+    <!-- SVG logo Google -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28px" height="28px" aria-hidden="true">
+      <path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.7 30.47 0 24 0 14.64 0 6.4 5.4 2.55 13.22l7.98 6.2C12.3 13.05 17.74 9.5 24 9.5z"/>
+      <path fill="#34A853" d="M46.1 24.5c0-1.57-.14-3.08-.39-4.5H24v9h12.65c-.55 2.9-2.2 5.36-4.7 7.02l7.27 5.64C43.44 37.1 46.1 31.3 46.1 24.5z"/>
+      <path fill="#FBBC05" d="M10.53 28.42c-.48-1.42-.75-2.94-.75-4.42s.27-3 .75-4.42l-7.98-6.2C.92 16.9 0 20.35 0 24c0 3.65.92 7.1 2.55 10.62l7.98-6.2z"/>
+      <path fill="#EA4335" d="M24 48c6.48 0 11.9-2.13 15.87-5.8l-7.27-5.64c-2.02 1.36-4.6 2.14-8.6 2.14-6.26 0-11.7-3.55-13.47-8.68l-7.98 6.2C6.4 42.6 14.64 48 24 48z"/>
+    </svg>
+  </button>
+
+  <script>
+    function calculate() {
+      const input = document.getElementById('expression').value;
+      const resultEl = document.getElementById('result');
+
+      if (!input.trim()) {
+        resultEl.innerText = "Zadej výraz!";
+        return;
+      }
+
+      // Převod čárky na tečku a odstranění mezer
+      const expr = input.replace(/,/g, ".").replace(/\s+/g, "");
+
+      let result;
+      try {
+        if (/^[0-9.+\-*/()]+$/.test(expr)) {
+          result = eval(expr);
+        } else {
+          result = "Neplatný výraz!";
+        }
+      } catch {
+        result = "Chyba ve výrazu!";
+      }
+
+      // Progress bar animace
+      const progressContainer = document.getElementById('progressContainer');
+      const progressBar = document.getElementById('progressBar');
+
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0";
+      progressBar.innerText = "Počítám… 0%";
+
+      // Restart CSS animace
+      void progressBar.offsetWidth;
+      progressBar.style.width = "100%";
+
+      // Aktualizace procent
+      const start = Date.now();
+      const duration = 3000; // 3 sekundy
+      const timer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const percent = Math.min(100, Math.round((elapsed / duration) * 100));
+        progressBar.innerText = "Počítám… " + percent + "%";
+        if (percent >= 100) {
+          clearInterval(timer);
+          resultEl.innerText = "Výsledek: " + result.toString().replace(".", ",");
+          progressContainer.style.display = "none";
+          progressBar.style.width = "0"; // reset pro příště
+        }
+      }, 50);
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const toggleBtn = document.getElementById("themeToggle");
+
+      if (body.classList.contains("light")) {
+        body.classList.remove("light");
+        body.classList.add("dark");
+        toggleBtn.innerText = "☀️ Světlý režim";
+        localStorage.setItem("theme", "dark");
+      } else {
+        body.classList.remove("dark");
+        body.classList.add("light");
+        toggleBtn.innerText = "🌙 Tmavý režim";
+        localStorage.setItem("theme", "light");
+      }
+    }
+
+    // Načtení uloženého režimu nebo detekce systému
+    window.onload = () => {
+      let savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const body = document.body;
+      const toggleBtn = document.getElementById("themeToggle");
+
+      if (!savedTheme) {
+        savedTheme = prefersDark ? "dark" : "light";
+      }
+
+      body.classList.add(savedTheme);
+      toggleBtn.innerText = savedTheme === "dark" ? "☀️ Světlý režim" : "🌙 Tmavý režim";
+    };
+  </script>
+</body>
+</html>
